@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  grade
+#  Grade the design project.
+
+from test_all import report_to_didit
+
+import os
+import subprocess
+import sys
+from typing import *
+
+ID_BASE = "unit"
+ID_PROJTEST = f"{ID_BASE}/class:Tests"
+
+def grade_bool(tag: str, passed: bool) -> bool:
+    id_str = f"{ID_PROJTEST}/method:{tag}()"
+    report_to_didit(f"id={id_str}", "/started")
+    if passed:
+        print(f"{tag}: PASSED")
+        report_to_didit(f"id={id_str}", "/finished/successful")
+    else:
+        print(f"{tag}: FAILED", file=sys.stderr)
+        report_to_didit(f"id={id_str}", "/finished/failed")
+
+    return passed
+
+def report_fail(tag: str, cause: str):
+    print(f"Project.{tag}: FAIELD {cause}")
+    report_to_didit(f"id={ID_PROJTEST}/method:{tag}()&cause={cause}", "/finished/failed")
+
+def test_bin(tag: str, args: List[str], cwd: str, timeout: str = "5s", required_files: Set[str] = set()) -> Tuple[bool, str]:
+    id_str = f"{ID_PROJTEST}/method:{tag}()"
+
+    report_to_didit(f"id={id_str}", "/started")
+    cause = ""
+
+    # Check that all files exist
+    all_exists = True
+    for f in required_files:
+        if not os.path.exists(f):
+            all_exists = False
+            break
+
+    if all_exists:
+
+        process = subprocess.run(["timeout", timeout] + args, stdout=subprocess.PIPE, check=False, shell=False, cwd=cwd)
+        stdout = process.stdout.decode("utf-8").lower()
+
+        if "fail" in stdout or process.returncode != 0:
+            print(f"Project.{tag}: FAILED")
+            cause = "FAILED, sort_test failed"
+        elif "pass" in stdout:
+            print(f"Project.{tag}: PASSED")
+
+        else:
+            print(f"Project.{tag}: FAILED, neither passed nor failed printed")
+            cause = "FAILED, neither passed nor failed printed"
+
+    else:
+        print(f"Project.{tag}: FAILED, compilation error")
+        cause = "FAILED, compilation error"
+
+    if cause == "":
+        report_to_didit(f"id={id_str}", "/finished/successful")
+    else:
+        report_to_didit(f"id={id_str}&cause={cause}", "/finished/failed")
+
+    return (cause == "", stdout)
+
+def grade_part1() -> None:
+    """
+    Part 1: Software optimization (sort)
+    """
+    score = 0
+    def printscore() -> None:
+        print(f"Part 1 Score = {score}")
+
+    subprocess.check_output([
+        "bash", "-c",
+        "cd part1 && make all -j 2 -s"
+    ])
+
+    cwd = "part1/"
+
+    print("Testing Part 1")
+    ok, test_result = test_bin(tag="Part1_sort_test", args=["rv_sim", "sort_test", "--auto"], required_files={"part1/sort_test.vmh", "part1/sort_bench.vmh"}, cwd=cwd, timeout="5s")
+
+    if not ok or "sort_test0: passed" not in test_result:
+        print(test_result)
+        printscore()
+        return
+
+    process = subprocess.run(["./instr_count.sh"], stdout=subprocess.PIPE, check=False, shell=False, cwd=cwd)
+    stdout = process.stdout.decode("utf-8").lower()
+    instrs = int(stdout)
+
+    print(f"Number of instructions: {instrs}")
+
+    le4 = instrs <= 400000
+    grade_bool("Part1_sort_sw_optimization_LE_400000", le4)
+    if le4:
+        score += 1
+
+    le3 = instrs <= 325000
+    grade_bool("Part1_sort_sw_optimization_LE_325000", le3)
+    if le3:
+        score += 1
+
+    le25 = instrs <= 250000
+    grade_bool("Part1_sort_sw_optimization_LE_250000", le25)
+    if le25:
+        score +=1
+
+    le21 = instrs <= 210000
+    grade_bool("Part1_sort_sw_optimization_LE_210000", le21)
+    if le21:
+        score += 1
+
+    printscore()
+
+def grade_part2() -> None:
+    """
+    Part 2: ProcessorIPC
+    """
+    score = 0
+    def printscore() -> None:
+        print(f"Part 2 Score = {score}")
+
+    cwd = "part2/"
+
+    print("Testing Part 2")
+    print(f"Make sure you have run `make` in `{cwd}`!")
+
+    ok, _ = test_bin(tag="Part2_IPC-fullasmtests", args=["./test.py", "--didit", "f"], cwd=cwd, timeout="120s")
+
+    if not ok:
+        report_fail("Part2_IPC-pipetests", "fullasm tests did not pass")
+        report_fail("Part2_IPC-sort_base", "fullasm tests did not pass")
+        printscore()
+        return
+
+    ok, _ = test_bin(tag="Part2_IPC-pipetests", args=["./test.py", "--didit", "p"], cwd=cwd, timeout="15s")
+
+    if not ok:
+        report_fail("Part2_IPC-sort_base", "pipe tests did not pass")
+        printscore()
+        return
+
+    ok, result = test_bin(tag="Part2_IPC-sort_base", args=["./test.py", "--didit", "s1"], cwd=cwd, timeout="7m")
+
+    if not ok:
+        print("FAILED, did not pass sort base")
+        printscore()
+        return
+
+    with open(f"{cwd}/result.txt", 'w') as f:
+        f.write(result)
+
+    periodlimit=550
+    numinstrs=445555
+
+    process = subprocess.run(["bash", "-c", "cat result.txt | ./get_period.sh"], stdout=subprocess.PIPE, check=False, shell=False, cwd=cwd)
+    stdout = process.stdout.decode("utf-8").lower()
+
+    if stdout == '':
+      print(f"FAILED: {result}")
+      printscore()
+      return
+
+    period = float(stdout)
+
+    process = subprocess.run(["bash", "-c", "cat result.txt | ./get_cycles.sh"], stdout=subprocess.PIPE, check=False, shell=False, cwd=cwd)
+    stdout = process.stdout.decode("utf-8").lower()
+
+    if stdout == '':
+      print(f"FAILED: {result}")
+      printscore()
+      return
+
+    cycles = int(stdout)
+
+    cpi = 99.99
+
+    if period <= periodlimit:
+        if cycles < 400000:
+            print("FAILED, Sort aborted early")
+        else:
+            cpi = float(cycles)/float(numinstrs)
+    else:
+        print(f"FAILED, Your processor has clock period ({period} ps) exceeding {periodlimit} ps")
+
+    with open(f"{cwd}/result.txt", 'r') as f:
+        result = str(f.read())
+    has_caches=("instruction and data caches present: yes" in result)
+
+    print(f"Your CPI = {cpi}")
+
+    if not has_caches:
+        # Add TWO points if they pass this
+        if grade_bool("Part2_IPC-sort_base-no_caches_LE_1.5", cpi < 1.5):
+            score += 2
+    else:
+        if grade_bool("Part2_IPC-sort_base-with_caches_LE_2.5", cpi < 2.5):
+            score += 4
+        if grade_bool("Part2_IPC-sort_base-with_caches_LE_2.0", cpi < 2.0):
+            score += 1
+        if grade_bool("Part2_IPC-sort_base-with_caches_LE_1.5", cpi < 1.5):
+            score += 1
+
+    printscore()
+
+def grade_part3() -> None:
+    """
+    Part 3: ProcessorRuntime
+    """
+    score = 0
+    def printscore() -> None:
+        print(f"Part 3 Score = {score}")
+
+    cwd = "part3/"
+    other_tests = ("Part3_Runtime-pipetests", "Part3_Runtime-sort_test", "Part3_Runtime-sort_bench")
+
+    print("Testing Part 3")
+    print(f"Make sure you have run `make` in `{cwd}`!")
+
+    ok, _ = test_bin(tag="Part3_Runtime-fullasmtests", args=["./test.py", "--didit", "f"], cwd=cwd, timeout="120s")
+
+    if not ok:
+        error = "fullasm tests failed"
+        for test in other_tests:
+            report_fail(test, error)
+        printscore()
+        return
+
+    ok, _ = test_bin(tag="Part3_Runtime-pipetests", args=["./test.py", "--didit", "p"], cwd=cwd, timeout="15s")
+
+    if not ok:
+        error = "pipe tests failed"
+        for test in other_tests[1:]:
+            report_fail(test, error)
+        printscore()
+        return
+
+    ok, test_result = test_bin(tag="Part3_Runtime-sort_test", args=["./test.py", "--didit", "--quick", "s2"], cwd=cwd, timeout="60s")
+
+    if not ok or "passed 1 test" not in test_result:
+        error = "sort_test failed"
+        for test in other_tests[2:]:
+            report_fail(test, error)
+        printscore()
+        return
+
+    ok, result = test_bin(tag="Part3_Runtime-sort_bench", args=["./test.py", "--didit", "s3"], cwd=cwd, timeout="9m")
+
+    if not ok:
+        print("FAILED, did not pass sort base")
+        printscore()
+        return
+
+    with open(f"{cwd}/result.txt", 'w') as f:
+        f.write(result)
+
+    process = subprocess.run(["bash", "-c", "cat result.txt | ./get_cycles.sh"], stdout=subprocess.PIPE, check=False, shell=False, cwd=cwd)
+    stdout = process.stdout.decode("utf-8").lower()
+
+    if stdout == '':
+      print(f"FAILED: {result}")
+      printscore()
+      return
+
+    cycles = int(stdout)
+
+    process = subprocess.run(["bash", "-c", "cat result.txt | ./get_runtime.sh"], stdout=subprocess.PIPE, check=False, shell=False, cwd=cwd)
+    stdout = process.stdout.decode("utf-8").lower()
+
+    if stdout == '':
+      print(f"FAILED: {result}")
+      printscore()
+      return
+
+    runtime = int(stdout)
+
+    with open(f"{cwd}/result.txt", 'r') as f:
+        result = str(f.read())
+    has_caches=("instruction and data caches present: yes" in result)
+    if not has_caches:
+        raise ValueError("FAILED, You must use data and instruction caches")
+
+    print(f"Your runtime = {runtime}")
+
+    if grade_bool("Part3_Runtime-sort_bench_LE_180000", runtime <= 180000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_165000", runtime <= 165000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_150000", runtime <= 150000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_135000", runtime <= 135000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_125000", runtime <= 125000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_115000", runtime <= 115000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_105000", runtime <= 105000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_95000", runtime <= 95000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_90000", runtime <= 90000):
+        score += 1
+    if grade_bool("Part3_Runtime-sort_bench_LE_85000", runtime <= 85000):
+        score += 1
+
+    printscore()
+
+def main(args: List[str]) -> int:
+    parts: List[int] = list(map(lambda x: int(x), args[1:]))
+    if len(parts) == 0:
+        # By default, grade all the parts
+        parts = [1, 2, 3]
+
+    # Signal start of all testing
+    report_to_didit(f"id={ID_BASE}", "/started")
+
+    grading_funcs = {
+        1: grade_part1,
+        2: grade_part2,
+        3: grade_part3,
+    }
+
+    for part in parts:
+        grading_funcs[part]()
+
+    # End of all testing
+    report_to_didit(f"id={ID_BASE}", "/finished/successful")
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
