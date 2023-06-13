@@ -1,0 +1,79 @@
+1. Does the repeated addition algorithm work for multiplying two numbers in two's complement 
+encoding? Why or why not?
+
+No, it does not work. The most likely reason is because repeated addition does not take
+into account the fact that the most significant bit is a signed bit; thus, the result
+that we obtain is always the result of the product between two different numbers. We
+could solve this by bit-negating one of the numbers, calculating the product, and
+then negating the product back.
+
+2. How do the delay and area of the sequential multiplier compare with those of the 
+combinational one? How many cycles does the sequential multiplier take to calculate a result? 
+Given these, which of the two multipliers has a lower latency? (i.e., from input to result, which
+one can calculate a product faster?)
+
+The area and the critical path delay for the sequential multiplier is much smaller than that
+of the combinational multiplier; having 341.54um^2 vs. 646.11 um^2 and 153.38ps vs. 572.46ps
+respectively. The sequential multiplier, which takes N-bit inputs, takes N cycles to 
+calculate a result. Thus, it would take a total of 8*153.38ps = 1227.04ps to get a result from
+an input. Given this information, the combinational multiplier has lower latency.
+
+3. For the combinational multipliers, how does critical-path delay grow with the number of bits 
+of the operands? How does area grow with the number of bits of the operands? Use order-of 
+notation.
+
+The area grows quadratically with the number of bits of the operands, close to the order of 
+O(n^2) growth. In the other hand, the critical-path delay grows linearly with the number of 
+bits of the operands, closer to the order of O(n) growth.
+
+4. For the folded sequential multipliers, how does critical-path delay grow with the number of 
+bits of the operands? How does area grow with the number of bits of the operands? Use 
+order-of notation.
+
+Given the results, we will have that the critical-path delay grow logarithmically with the 
+number of bits, to the order of O(log2(n)). Meanwhile, as the area duplicates for each power
+of 2, we will have that the area grows linearly, to the order of O(n).
+
+5. Compare the area and delay of each of the combinational circuits. Which components have the 
+longest critical-path delay? What would be the overall propagation delay if we implemented 
+this as a single combinational function?
+
+The components with the longeset critical-path delay are the divide3 component with 440.5ps
+and the multiply7 with 286.39ps. If we implemented this as a single combinational function
+we would add the critical-path delay of all the components, thus having a resulting
+delay of 917.09ps.
+
+6. How do you intuitively expect the latency of the circuit to grow as you increase the number 
+of elements in the input? Does the result match your expectations?
+
+I would expect the latency of the circuit to grow quadratically for every power of two, as 
+the number of "stages" increases as a function 1/2*log2(n)(log2(n)+1), where n is the number
+of elements. This is in fact correct as given by the results; the latency increases with
+the function above times the initial latency (i.e. the latency when n=2).
+
+7. How do you intuitively expect the area of the circuit to grow as you increase the number 
+of elements in the input? Does the result match your expectations?
+
+I would expect the area of the circuit to increase exponentially for every power of two.
+This is because the number of comparators increases as the following function 
+log2(n)*(1+log2(n))*2^(log2(n)-2), where n is the number of elements. This is also correct
+as given by the results; the latency increases as by the function above times an initial
+area (i.e. the one given by n=2). 
+
+8. What are the latency and throughput of both implementations? If you wanted to minimize 
+latency, which one would you choose? How about if you wanted to maximize throughput?
+
+The throughput of the combinational and pipelined implementations are 1/(1245.77ps) and 
+1/(212.71ps) respectively; meanwhile, the latency are 1245.77ps and 212.71ps * 6 = 1276.26ps
+respectively. Thus, given these results, I would choose the combinational one for
+minimizing latency (although there is not much of a difference between both implementations)
+and the pipelined one for maximizing throughput.
+
+9. We are considering using an 8-element sorting network for a low-power processor that runs
+at 500MHz (so our clock period is fixed at 2000 picoseconds). We want to maximize throughput
+first, then minimize area and latency if possible. Which of the two sorting networks would
+you choose, and why?
+
+I would choose the pipelined implementation, as this one allows us to maximize throughput
+by having multiple cycles for the same sorting operation. After that, we can find out
+strategies to minimize area and latency in the sorting implementation.

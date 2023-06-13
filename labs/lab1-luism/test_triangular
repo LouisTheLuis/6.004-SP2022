@@ -1,0 +1,50 @@
+#!/usr/bin/python
+
+######## 6.004 test script for the "triangular" routine ########
+
+# Usage:
+#     test_triangular TEST_NUM
+# Arguments:
+#     TEST_NUM: Passed to the triangular testbench (selects test inputs)
+
+import subprocess
+import os.path
+import sys
+
+rsim_cmd = "rv_sim"
+
+# Check for a valid test number argument
+try:
+    test_num=int(sys.argv[1])
+    if (test_num < 1) or (test_num > 5):
+        raise ValueError
+except:
+    print("ERROR: Please specify a test number between 1 and 5")
+    # Return 0 so the test_all script doesn't think this is a sim error
+    sys.exit(0)
+
+# Inputs used by the five different tests in the triangular testbench
+inputs = [3, 6, 10, 25, 100]
+
+# Use the python reference implementation to calculate the correct answer
+def triangular(n):
+    running_sum = 0
+    for i in range(n+1):
+        running_sum += i
+    return running_sum
+
+# Calculate the correct result for this input
+result = str(triangular(inputs[test_num-1]))
+test_name = "triangular" + str(test_num)
+
+if os.path.isfile("./triangular.vmh"):
+    # Run the simulator with the specified test number
+    test_out = subprocess.check_output(rsim_cmd + " triangular " + str(test_num) + " --auto", shell=True)
+
+    # Check that the output is correct
+    if test_out.startswith(result+":Passed\n"+test_name+": PASSED") and ("FAILED" not in test_out):
+	print("Lab1."+test_name+": PASSED")
+    else:
+	print("Lab1."+test_name+": FAILED - incorrect output\n"+test_out)
+else:
+    print("Lab1."+test_name+": FAILED not built - compile error")

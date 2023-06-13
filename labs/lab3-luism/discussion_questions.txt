@@ -1,0 +1,23 @@
+1: Does the circuit diagram shown in bit_scan_reverse.svg match your Minispec implementation of bit_scan_reverse? Prove that is the case by using Boolean algebra.
+
+Yes, the circuit shown in the image matches the Minispec implementation.
+Using Boolean algebra, we have that the digits in the image are given by:
+
+r[1] = ~((~a[3])(~a[2])) = a[3] | a[2] (by De Morgan's Law)
+
+r[0] = ~(~((~a[2])a[1])(~a[3])) = ((~a[2])a[1]) | a[3]   (by De Morgan's Law)
+
+Both matching the code written in the Minispec implementation.
+
+2: How does seven_segment_decoder change when synthesized with the extended library? What gates are used now vs. with the basic library? How does this act area and
+delay?
+
+When using the extended library, the seven_segment_decoder includes different logic gates. Whereas previously it was composed uniquely by INV, NAND2 and NOR gates, now it includes
+AND2, INV, NAND2 and NAND3 gates; NOR gates and even a XNOR2 gate. In general, the number of total gates decreased (from 40 to 31). The total area also decreased (from around 30 
+squared micrometers to around 27); however, the cumulative delay increased (from ~73 picoseconds to ~76 picoseconds).
+
+3: Synthesize parity4 using the command above. Synthesize it again, but have
+it optimize for delay (omit the -d 1000 ag). How do its area and delay change between the two?
+
+When optimizing for delay, the cumulative delay decreases (from around 56.6 ps to 50.1 ps). However, the area increases to almost the double; from roughly 4.788um^2 to 9.842um^2,
+thus showing the tradeoff between area and time delay.

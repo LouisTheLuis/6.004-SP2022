@@ -1,0 +1,8 @@
+lab_id: "Lab7"
+mandatory_tests:
+  - ["helper", null]
+  - ["DirectMappedMicrotest", null]
+  - ["TwoWayMicrotest", null]
+  - ["DirectMappedBeveren", null]
+  - ["TwoWayBeveren", null]
+optional_tests: []

@@ -1,0 +1,7 @@
+*.dump
+*.vmh
+build
+*.o
+*.pyc
+testout*
+tui.conf

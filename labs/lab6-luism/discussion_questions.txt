@@ -1,0 +1,97 @@
+QUESTION 1. What is the destination register and immediate immU for the LUI instruction that is encoded 
+as 0x000010b7? What is the RISC-V assembly you might write to produce this instruction?
+
+The destination register is 0x1 and the immU is 0x01000. Thus, the RISC-V assembly that might give
+this instruction would be:
+
+lui x1, 0x01000
+
+QUESTION 2. What are the destination register and two source registers of the AND instruction that is 
+encoded as 0x001171b3? What is the RISC-V assembly you might write to produce this instruction?
+
+The destination register is 0x11 and the source registers are 0x1 and 0x10 for rs2 and rs1
+respectively. Thus, the RISC-V assembly that might lead to this instruction would be:
+
+and a1, a0, x1
+
+QUESTION 3:
+
+(a) If instr is a 32-bit word with instr[6:0] == 0b0110111, is it always the encoding of an LUI
+instruction? Why or why not?
+
+Yes, because LUI is the only instruction for which the opcode is equal to 0b0110111. Thus, it
+will always correspond to LUI.
+
+(b) If instr is a 32-bit word with instr[6:0] == 0b0110011 and instr[14:12] == 0b111, is it 
+always the encoding of an AND instruction? Why or why not?
+
+Yes, because those two values for the opcode and funct3 only correspond to the structure of
+an AND instruction; thus, always being its enconding.
+
+QUESTION 4. Does your quicksort.S have any ret instructions? If so:
+
+(a) What instruction does the ret pseudo-instruction actually get assembled into? What are the 
+decoded source and destination registers and the immediate? Can you deduce this information from
+your dump file?
+
+The <ret> instruction most likely gets assembled into a <jalr> instruction, in which the decoded
+source would be the value in the ra register, the immediate would be 0, and the destination
+register could be any register. This can be seen in the dump file, where the first ret instruction
+is translated into jalr x0, x1(0). 
+
+(b) Choose a specific instance of ret in your coed. For each of the three fields data, nextPc,
+and addr returned by Execute, answer these questions:
+
+> Can you say what the value of that field will be for that instance of ret? If so, what is the
+value? If not, why not?
+
+For the data, the value stored is pc + 4, which just by looking at the code is not simply 
+deducible. In the case of nextPc, the value would be whatever value is in the register
+x1 at that point; which can be deduced from the pc value at the first time the label was called.
+Finally, the addr will always be 0.
+
+> Does the value affect the processor's behavior?
+
+The only field that affects the processor's behavior in this case is the nextPc field, as the 
+data will always be written to x0 (which is by default set to 0) and the addr will also be 0.
+
+QUESTION 5. Recall that in RISC-V assembly, the x0 register is hardwired to zero. How
+is that achieved in your Processor? You will likely want to look at the file RegisterFile.ms
+to see how the register file is implemented.
+
+This is achieved by having a Register File (made of a 32-size vector of Words) which is 
+initiliazed to 0 for all of its values and that only allows the registers of index 1 to 31
+to be rewritten. Thus, when an instruction has rd = x0, this one would still not be able
+to rewrite x0, as the register file only allows the registers x1 to x31 to be rewritten.
+
+QUESTION 6. Run synth Processor.ms Processor -l multisize and report your Processor's minimum 
+clock period. What path do you think is your Processor's critical path?
+
+In this case of the Processor, we have a critical path delay (and thus, a minimum clock period)
+of 864.31ps. The Processor's critical path is most likely the path taken by any of the ALU
+functions (though in a normal processor, it would most likely be the path from the LOAD
+instruction).
+
+QUESTION 7. Run these commands:
+	synth Decode.ms decode -l multisize
+	synth Execute.ms execute -l multisize
+	synth MagicMemory.ms MagicMemory -l multisize
+Report the critical-path delay for all of them. (You cannot synthesize RegisterFile due to the 
+fact that it contains some unsynthesizable methods, but you can assume that the critical path 
+delay for read/write into RegisterFile is approximately 160ps.)
+Which module contributes the most to your Processor's critical path delay? What simple 
+optimization can you make to decrease the propagation delay of this module?
+
+The critical path delay is of 127.67ps for Decode.ms, 680.95ps for Execute.ms, and of 84.53ps 
+for MagicMemory.ms. Thus, we will have that the Execute.ms would be the module that contributes
+the most to the critical path delay. One simple opmitization that could improve this module's
+delay would be to optimize the functioning of the ALU functions; as these are the ones from
+which the critical path delay comes from. 
+
+QUESTION 8. Do the critical-path delays of your answers in the previous Discussion Question add 
+up to your Processor's critical path delay? If not, why do you think the answers are different?
+
+No, the modules add up to 1053.15ps, which is a couple picoseconds more than the entire 
+Processor's critical path delay. The answers might be different because certain modules remain
+unused depending on certain instructions, thus having that the addition of all the critical
+path delays does not accurately represent the critical path delay of the entire system.

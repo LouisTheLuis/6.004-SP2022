@@ -1,0 +1,50 @@
+#!/usr/bin/python
+
+######## 6.004 test script for the "factorial" routine ########
+
+# Usage:
+#     test_factorial TEST_NUM
+# Arguments:
+#     TEST_NUM: Passed to the factorial testbench (selects test inputs)
+
+import subprocess
+import os.path
+import sys
+
+rsim_cmd = "rv_sim"
+
+# Check for a valid test number argument
+try:
+    test_num=int(sys.argv[1])
+    if (test_num < 1) or (test_num > 5):
+        raise ValueError
+except:
+    print("ERROR: Please specify a test number between 1 and 5")
+    # Return 0 so the test_all script doesn't think this is a sim error
+    sys.exit(0)
+
+# Inputs used by the five different tests in the factorial testbench
+inputs = [1, 3, 6, 10, 12]
+
+# Use the python reference implementation to calculate the correct answer
+def factorial(n):
+    running_prod = n
+    for i in range(1, n):
+        running_prod *= i
+    return running_prod
+
+# Calculate the correct result for this input
+result = str(factorial(inputs[test_num-1]))
+test_name = "factorial" + str(test_num)
+
+if os.path.isfile("./factorial.vmh"):
+    # Run the simulator with the specified test number
+    test_out = subprocess.check_output(rsim_cmd + " factorial " + str(test_num) + " --auto", shell=True)
+
+    # Check that the output is correct
+    if test_out.startswith(result+":Passed\n"+test_name+": PASSED") and ("FAILED" not in test_out):
+	print("Lab2."+test_name+": PASSED")
+    else:
+	print("Lab2."+test_name+": FAILED - incorrect output:\n"+test_out)
+else:
+    print("Lab2."+test_name+": FAILED not built - compile error")

@@ -1,0 +1,14 @@
+seven_segment_test*
+population_count_test*
+is_geq_test*
+bit_scan_reverse_test*
+is_power_of_2_test*
+log_of_power_of_2_test*
+equal_test*
+vector_equal_test*
+testout*
+CombDigitalSystemsTemp.ms
+**/synthDir
+
+# Minispec temp directories
+tmp_msc_*

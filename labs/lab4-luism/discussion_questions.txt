@@ -1,0 +1,55 @@
+1. How do you intuitively expect the delay of the circuit to grow as you increase 
+the number of bits in the input? Does the result match your expectations? How is this 
+delay distributed across the nodes of the critical path? Please use the above 
+discussion on fanout to help you answer these questions.
+
+Intuitively, the delay of the circuit would grow linearly as a consequence of an 
+increase in the number of inputs connected to each output (fanout). This can be seen
+in the <sel>'s gate delay, which increases roughly linearly at a rate of roughly
+2.4 * (#inputs + 1), with some extra delay. This can also be seen as the delay is 
+mostly distributed across the <sel> and the INV gates (the latter not growing 
+linearly), which are also the ones for which the fanout increases with number of 
+imputs.
+
+2. How do you expect the delay and area to grow as you increase the width for these 
+delay-optimized multiplexers? Do the results match your expectations? Please use the
+discussion in the previous paragraph to help you answer these questions.
+
+I expected the delay to increase more slowly and the area to increase very rapidly.
+Both predictions were correct; the use of buffers ameliorated the delay as the 
+number of inputs increased, even having a smaller delay for the mux#(256) than for
+the mux#(64). However, the area increased rapidly; going from 10.108um^2 for the
+mux#(4) to 687.61um^2 mux#(256). This is because now we are optimizing for delay
+instead of area.
+
+3. How do mux#(64)'s delay and area change with multisize vs. with extended? 
+Where does the tool use larger gates?
+
+While the number of gates and the area remain similar between multisize and extended
+(206 gates vs. 216 gates and 178um^2 vs. 172um^2, respectively), the critical path
+delay decreased immensely, going from 110.9ps in the extended to 65.82ps in the
+multisize. The tool uses larger gates with the buffers (size X4), though it uses
+several other X2 gates.
+
+4. Report the area, delay, and gate count of the ALU and each component.
+Based on these results, which of the main components determines the ALU's 
+critical-path delay? Which component consumes more of the ALU's area?
+
+ALU:         1311.65um^2 , 615.45ps , 1386 gates
+addSub#(32): 276.64um^2 , 606.70ps , 229 gates
+lt32:        187.53um^2 , 119.22ps , 217 gates
+sft32:       632.81um^2 , 195.30ps , 703 gates
+
+Based on the data, the addSub#(32) component determines the ALU's critical-path delay,
+as it has the greatest delay out of the other three components. The sft32 component
+determines the area, due to its large number of gates; thus, providing a greater
+area.
+
+5. Which shifter implementation takes less area, and which has a shorter delay? 
+Which variant is more appropriate for your ALU? (you can modify your ALU to check, 
+but you don't need to).
+
+The sft32 implementation takes much less area (roughly half of sft32_alt's), and the 
+sft32_alt implementation takes a shorter delay of around 25ps. The most appropriate
+variant would depend on what optimization is the one we are looking for; sft32 for
+area optimization, and sft32_alt for delay optimization.

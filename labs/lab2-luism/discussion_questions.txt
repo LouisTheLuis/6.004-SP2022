@@ -1,0 +1,9 @@
+1. Assuming every instruction takes the same amount of time, what percentage of time
+does your code spend in partition? If you wanted to improve the performance of your
+code, which portion would you look at first?
+
+As we have 122380 instructions for <partition> and 147065 instructions for the entire
+code, we will have that <partition> would roughly take 83.21% of the time of the 
+code. Thus, if I wanted to improve the performance I would first look at the 
+implementation of <sort>; more specifically, at the implementation of its loop and
+assignment of array values in memory.

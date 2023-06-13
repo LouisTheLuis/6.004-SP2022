@@ -1,0 +1,34 @@
+1. What are the index, line offset, and tag bits for each of the requests above?
+
+Going from first to last, we have:
+
+           TAG           |   INDEX   | BLCKOFF | BYTEOFF
+_________________________________________________________
+
+20'b00000000000000000000 | 6'b000010 | 4'b1111 | 2'b00            Store
+20'b00000000000000000000 | 6'b000010 | 4'b1111 | 2'b00            Load
+20'b00000000000000000001 | 6'b000010 | 4'b0101 | 2'b00            Load
+20'b00000000000000000000 | 6'b000010 | 4'b0001 | 2'b00		  Store
+20'b00000000000000000000 | 6'b000010 | 4'b1111 | 2'b00		  Load
+
+
+2. What is the sequence of states that the cache FSM goes through when processing this sequence 
+of requests? You may assume that the lines in the cache are initially not valid.
+
+Ready -> Lookup -> Fill -> Ready 
+Ready -> Lookup -> Ready
+Ready -> Lookup -> Fill -> Writeback -> Ready
+Ready -> Lookup -> Fill -> Ready
+Ready -> Lookup -> Ready
+
+3. Consider the two-way set-associative cache. What is the sequence of states that the cache FSM
+goes through when processing this sequence of requests? You may assume that the lines in the 
+cache are initially invalid.
+
+Ready -> Lookup -> Fill -> Ready  
+Ready -> Lookup -> Ready          
+Ready -> Lookup -> Fill -> Ready  
+Ready -> Lookup -> Ready 
+Ready -> Lookup -> Ready
+
+

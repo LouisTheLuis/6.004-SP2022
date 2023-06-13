@@ -1,0 +1,8 @@
+lab_id: "Lab6"
+mandatory_tests:
+  - ["decode", null]
+  - ["execute", null]
+  - ["micro", null]
+  - ["fullasm", null]
+  - ["quicksort", null]
+optional_tests: []

@@ -1,0 +1,23 @@
+# build files
+*.so
+*.bo
+buildDir/*
+synthDir/*
+
+# test files
+test_DirectMappedBeveren
+test_DirectMappedMicrotest
+test_TwoWayBeveren
+test_TwoWayMicrotest
+test_helper
+debug_*
+
+# Minispec temp directories
+tmp_msc_*
+
+# editor swap files
+*.sw*
+*~
+
+#test results
+testout

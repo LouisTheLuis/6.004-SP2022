@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+import argparse, re, sys, subprocess
+import uuid
+
+def red(text: str) -> str:
+    if sys.stdout.isatty():
+        return "\x1b[31m{}\x1b[0m".format(text)
+    else:
+        return text
+
+def get_area(func: str, subdir: str):
+    p = subprocess.Popen(['synth', 'ALU.ms', func,
+        # Use extended library since sometimes weird stuff is synthesized w/o the extended library
+        '-l', 'extended',
+        '--optLevel', '0', '--synthdir', "checkDir/{}".format(subdir)
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
+    (stdout, stderr) = p.communicate()
+    if p.returncode == 0:
+        try:
+            return float(re.search(r"Area: ([0-9]+\.?[0-9]*) um\^2", stdout).group(1))
+        except AttributeError:
+            sys.stderr.write("No area found for {}!\n".format(func))
+            sys.stderr.flush()
+            sys.exit(1)
+    else:
+        sys.stderr.write(stderr)
+        sys.stderr.write("\nEmpty Circuit\n")
+        sys.stderr.flush()
+        sys.exit(p.returncode)
+
+# for func in ['rca#(32)', 'addSub#(32)', 'bad_addSub#(32)', 'ltu32', 'lt32', 'bad_lt32', 'barrelRShift', 'sr32', 'bad_sr32', 'sft32', 'manual_rev_sft32', 'bad_sft32', 'alu', 'bad_alu', 'seq_alu']:
+#     print(func, get_area(func))
+
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description='Area checker')
+parser.add_argument("func1", help="Complex function")
+parser.add_argument("multiplier", help="Multiplier: warn if the more complex function's area is more than this times the sum of the simpler functions' area", type=float)
+parser.add_argument("funcs", help="Simpler function(s)", nargs='+')
+args = parser.parse_args()
+
+print("Checking area of {} against area of {}...".format(args.func1, '+'.join(args.funcs)), end="")
+sys.stdout.flush()
+
+tempdir = uuid.uuid4().hex
+area1 = get_area(args.func1, tempdir)
+areas = [get_area(func, tempdir) for func in args.funcs]
+
+if len(areas) == 1: areas_display = str(areas[0])
+else: areas_display = '{} = {}'.format('+'.join(map(str, areas)), sum(areas))
+
+if area1 > args.multiplier * sum(areas):
+    print(red("\n\nWARNING: area of {} ({}) > {} * area of {} ({})".format(args.func1, area1, args.multiplier, '+'.join(args.funcs), areas_display)))
+    print("Make sure that {} does not use more than one copy of the functions {}!".format(args.func1, ', '.join(args.funcs)))
+    print("Check the handout if you're not sure what this means.")
+    print("If you're sure only one copy is used, the area violation is likely caused by some redundant logic in your code.")
+else:
+    print("OK ({} vs {})".format(area1, sum(areas)))

@@ -1,0 +1,56 @@
+#!/usr/bin/python
+
+######## 6.004 test script for the "bubblesort" routine ########
+
+# Usage:
+#     test_bubblesort TEST_NUM
+# Arguments:
+#     TEST_NUM: Passed to the bubblesort testbench (selects test inputs)
+
+import subprocess
+import os.path
+import sys
+
+rsim_cmd = "rv_sim"
+
+# Check for a valid test number argument
+try:
+    test_num=int(sys.argv[1])
+    if (test_num < 1) or (test_num > 5):
+        raise ValueError
+except:
+    print("ERROR: Please specify a test number between 1 and 5")
+    # Return 0 so the test_all script doesn't think this is a sim error
+    sys.exit(0)
+
+# Number of elements in each test array (output should contain this many g's)
+results = [7, 6, 10, 20, 200]
+test_name = "bubblesort" + str(test_num)
+
+if os.path.isfile("./bubblesort.vmh"):
+    # Run the simulator with the specified test number
+
+    test_out = subprocess.check_output(rsim_cmd + " bubblesort " + str(test_num) + " --auto", shell=True)
+
+    test_out_lines = test_out.split("\n")
+    try:
+	numbers = [int(item) for item in test_out_lines[0].split(",")[:-1]]
+	current = numbers[0]
+	good = True
+	for item in numbers:
+	    if item < current:
+		good = False
+	    else:
+		current = item
+	if good:
+	    if test_out_lines[1] != "g"*results[test_num-1]:
+		good = False
+	if good:
+	    print("Lab1."+test_name+": PASSED")
+	else:
+	    print("Lab1."+test_name+": FAILED - incorrect output\n"+test_out_lines[0]+"\n"+test_out_lines[1])
+    except:
+	print("Lab1."+test_name+": FAILED - unknown problem parsing output")
+        
+else:
+    print("Lab1."+test_name+": FAILED not built - compile error")

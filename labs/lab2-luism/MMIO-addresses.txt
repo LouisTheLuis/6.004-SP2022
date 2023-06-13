@@ -1,0 +1,10 @@
+0x 4000 0000    WRITE-ONLY    Out to console (prints ASCII character)
+0x 4000 0004    WRITE-ONLY    Out to console (prints decimal number)
+0x 4000 0008    WRITE-ONLY    Out to console (prints hexadecimal number)
+
+0x 4000 4000    READ-ONLY     In from console (gets signed word)
+
+0x 4000 5000    READ-ONLY     Cycle counter (gets number of instructions executed since simulation start)
+
+0x 4000 6000    READ-ONLY     Performance counter (gets number of instructions executed while counter on)
+0x 4000 6004    WRITE-ONLY    0 to turn performance counting off, 1 to turn performance counting on

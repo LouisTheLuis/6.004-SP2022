@@ -1,0 +1,17 @@
+buildDir/*
+synthDir*
+*.so
+*.bo
+*synth_out
+
+# Generated test binaries
+test_*
+!test_all
+!test_info.yml
+!test_*_target
+
+# Minispec temp directories
+testout*
+tmp_msc_*
+FoldedMultiplierCustomTest*
+BitonicSorter8DebugTest

@@ -1,0 +1,77 @@
+#include "src/defines.h"
+.section ".text.init"
+    .globl sort
+
+/*
+C equivalent (for reference)
+
+void sort(int *p, n) {
+    int swapped = 1;
+    while (swapped != 0) {
+        swapped = 0;
+        for (int i = 0; i < n - 1; i++) {
+            if (p[i] > p[i + 1]) {
+                int tmp = p[i];
+                p[i] = p[i + 1];
+                p[i + 1] = tmp;
+                swapped = 1;
+            }
+        }
+        n = n - 1;
+    }
+}
+
+Python equivalent (for reference)
+
+# p is an array of integers
+# n is the number of elements in p
+#  (in other words, n == len(p))
+
+def sort(p, n):
+    swapped = True
+    while swapped:                            # stop if we didn't have to make any swaps (meaning everything is in order)
+        swapped = False
+        for i in range(n - 1):
+            if p[i] > p[i+1]:                 # if a larger element comes before a smaller element,
+                p[i], p[i+1] = p[i+1], p[i]   #   swap them
+                swapped = True
+        n -= 1                        # optimization: after the first pass, the biggest element will be in the last place;
+                                      #    after the second pass, the two biggest elements will be in the last two places;
+                                      #    and so on -- so on the n-th pass we only need to consider the first n elements
+*/
+
+sort:
+  // lw a2, 0(a0)    // This is a guide, a0 contains the address of the first element of the array, so the idea would be that this will be the way we call stuff
+  li a2, 1           // initialize swapped (a3) to be equal to 1
+  bne a2, 1, end     // if swapped != 1, end the program
+  li a2, 0           // swapped = 0
+while:
+  li a3, 0           // i initialized to 0
+  addi a4, a1, -1    // a4 = n-1
+loop:
+  bge a3, a4, after
+  lw a5, a3(a0)      // a5 = p[i]
+  addi a3, a3, 1     // a3 = i+1
+  lw a6, a3(a0)      // a6 = p[i+1]
+  bge a6, a5, loop   // if p[i+1] >= p[i], then restart the loop with i+1
+  mv a7, a6
+  mv a6, a5
+  mv a5, a7
+  li a2, 1           // swapped = 1
+  addi a3, a3, 1     // i += 1
+  beq x0, 0, loop    // returns to loop
+after:
+  addi a1, a1, -1    // n -= 1
+  beq x0, 0, while   // goes to while statement
+end:
+  ret
+
+
+
+// a0 = &p[0]
+// a1 = n
+// a2 = swapped
+// a3 = i
+// a4 = n-1
+// a5 = p[i]
+// a6 = p[i+1]

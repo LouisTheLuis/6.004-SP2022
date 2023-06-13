@@ -1,0 +1,25 @@
+#!/bin/bash
+set -euo pipefail
+
+# arg #1: target delay we should be under
+
+BASENAME="fast_folded_multiplier"
+SRC_FILE="Multipliers.ms"
+MODULE="FastFoldedMultiplier#(32)"
+
+EXEC_FILE="./test_${BASENAME}"
+DELAY_FILE="./testout_${BASENAME}_delay"
+
+if [[ -f "$DELAY_FILE" ]]; then
+    delay=$(cat $DELAY_FILE)
+else
+    output=$(timeout 15s $EXEC_FILE)
+    delay=$(./get_delay.sh $SRC_FILE $MODULE)
+    echo "$delay" > "$DELAY_FILE"
+fi
+
+if (( $(echo "$delay < $1" | bc -l) )); then
+    echo "Lab5.test_${BASENAME}_target${1}.PASSED: delay $delay < $1"
+else
+    echo "Lab5.test_${BASENAME}_target${1}.FAILED: delay $delay >= $1"
+fi

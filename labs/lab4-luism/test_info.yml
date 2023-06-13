@@ -1,0 +1,18 @@
+lab_id: "Lab4"
+mandatory_tests:
+  - ["fullAdder", null]
+  - ["rca32", null]
+  - ["addSub32", null]
+  - ["cmp", null]
+  - ["ltu32", null]
+  - ["lt32", null]
+  - ["sr32", null]
+  - ["sll32", null]
+  - ["sft32", null]
+  - ["alu", null]
+optional_tests:
+  - ["fastAdd32_target", 200]
+  - ["fastAdd32_target", 250]
+  - ["fastAdd32_target", 300]
+  - ["fastAdd32_target", 350]
+  - ["fastAdd32_target", 400]

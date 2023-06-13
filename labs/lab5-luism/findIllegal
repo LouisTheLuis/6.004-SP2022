@@ -1,0 +1,76 @@
+#!/usr/bin/python3
+# Illegal operator finder
+import argparse, os, re, string, subprocess, sys
+from tempfile import mkdtemp
+
+def readFile(file, descr = None):
+    try:
+        f = open(file, "r")
+        data = f.read()
+        f.close()
+    except:
+        print("Could not read%s file %s" % ((" " + descr) if descr else "", file))
+        sys.exit(1)
+    return data
+
+# Runs a command with fail-stop semantics, like make. If the program returns
+# successfully, run() returns stdout and stderr; on a failure, run() stops the
+# program.
+def run(cmd):
+    p = subprocess.Popen(cmd, shell=True, universal_newlines=True,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (stdout, stderr) = p.communicate()
+    if p.returncode == 0:
+        return stdout
+    else:
+        sys.stderr.write(stderr)
+        sys.stderr.flush()
+        sys.exit(p.returncode)
+
+def decolorize(s):
+    # https://stackoverflow.com/a/14693789
+    return re.sub(r"\x1B[@-_][0-?]*[ -/]*[@-~]", "", s)
+
+def probePattern(filePath, pattern):
+    """
+    find illegal operators in a compiled file
+    return those operators in a list
+    """
+    out = readFile(filePath)
+    # remove all comments (they could include illegal operators!)
+    out = re.sub(r'/\*.*?\*/|\/{2}.*?\n', '', out)
+    match = re.findall(pattern, out)
+    if not match:
+        return None
+
+    usedOperators = []
+    for m in match:
+        matched = re.sub(r"\$","",m);
+        usedOperators.append(matched.strip())
+    return usedOperators
+
+
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Illegal operator finder')
+parser.add_argument("file", help="Minispec file containing the function to check")
+parser.add_argument("function", help="Name of the function to check")
+args = parser.parse_args()
+
+tmpDir = mkdtemp(suffix="ms")
+userDir = os.getcwd()
+mscOut = run('(cd %s && msc %s/%s "%s" -o v)' % (tmpDir, userDir, args.file, args.function))
+m = re.search("produced verilog output (.*?)\n", decolorize(mscOut))
+if m is None:
+    print("error: msc didn't produce any output!?")
+    sys.exit(1)
+verilogFile = m.group(1)
+
+pattern = ' (\*|/|%) '
+matches = probePattern(os.path.join(tmpDir, verilogFile), pattern)
+
+if not matches:
+    sys.exit(0)
+else:
+    print("FAILED: Function %s uses operators %s" % (args.function, " ".join(list(set(matches)))))
+    sys.exit(1)
+

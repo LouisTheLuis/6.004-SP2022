@@ -1,0 +1,60 @@
+#!/usr/bin/python
+
+######## 6.004 test script for the "quicksort" routine ########
+
+# Usage:
+#     test_quicksort TEST_NUM
+# Arguments:
+#     TEST_NUM: Passed to the quicksort testbench (selects test inputs)
+
+import subprocess
+import os.path
+import sys
+
+rsim_cmd = "rv_sim"
+
+# Check for a valid test number argument
+try:
+    test_num=int(sys.argv[1])
+    if (test_num < 1) or (test_num > 5):
+        raise ValueError
+except:
+    print("ERROR: Please specify a test number between 1 and 5")
+    # Return 0 so the test_all script doesn't think this is a sim error
+    sys.exit(0)
+
+# Number of elements in each test array (output should contain this many g's)
+results = [7, 6, 10, 20, 200]
+test_name = "quicksort" + str(test_num)
+
+if os.path.isfile("./quicksort.vmh"):
+    # Run the simulator with the specified test number
+
+    proc = subprocess.Popen(rsim_cmd + " quicksort " + str(test_num) + " --auto", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    proc.stdin.write("1") # send some number to make test go thru after implementing kth_smallest
+    test_out = proc.communicate()[0]
+
+    proc.stdin.close()
+
+    test_out_lines = test_out.split("\n")
+    try:
+	numbers = [int(item) for item in test_out_lines[0].split(",")[:-1]]
+	current = numbers[0]
+	good = True
+	for item in numbers:
+	    if item < current:
+		good = False
+	    else:
+		current = item
+	if good:
+	    if test_out_lines[1] != "g"*results[test_num-1]:
+		good = False    
+	if good:
+	    print("Lab2."+test_name+": PASSED")
+	else:
+	    print("Lab2."+test_name+": FAILED - incorrect result\n"+test_out_lines[0]+"\n"+test_out_lines[1])
+    except:
+	print("Lab2."+test_name+": FAILED "+ '\n'.join(test_out_lines))
+        
+else:
+    print("Lab2."+test_name+": FAILED not built - compile error")

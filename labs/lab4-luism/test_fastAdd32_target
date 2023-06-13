@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+
+# arg #1: target delay we should be under
+
+if [[ -f "./testout_fastAdd32_delay" ]]; then
+    delay=$(cat ./testout_fastAdd32_delay)
+else
+    output=$(timeout 15s ./test_fastAdd32)
+    delay=$(./get_delay.sh ALU.ms "fastAdd#(32)")
+    echo "$delay" > ./testout_fastAdd32_delay
+fi
+
+if (( $(echo "$delay < $1" | bc -l) )); then
+    echo "Lab4.fastAdd32_target${1}.PASSED: delay $delay < $1"
+else
+    echo "Lab4.fastAdd32_target${1}.FAILED: delay $delay >= $1"
+fi

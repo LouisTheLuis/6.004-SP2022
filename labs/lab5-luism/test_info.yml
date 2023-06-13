@@ -1,0 +1,8 @@
+lab_id: "Lab5"
+mandatory_tests:
+  - ["multiply_by_adding", null]
+  - ["folded_multiplier", null]
+  - ["pipeline_math_target", 500]
+  - ["sorting_network_target", 250]
+optional_tests:
+  - ["fast_folded_multiplier_target", 280]
